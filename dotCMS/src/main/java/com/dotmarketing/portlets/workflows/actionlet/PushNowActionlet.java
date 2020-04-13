@@ -51,6 +51,7 @@ public class PushNowActionlet extends WorkFlowActionlet {
             "object to the specified environment(s). Multiple environments can be separated by a comma (',')";
     private static final String PARAM_ENVIRONMENT = "environment";
     private static final String PARAM_FORCE_PUSH = "force";
+    private static final String PARAM_FILTER_KEY = "filterKey";
 
     private final PublisherAPI publisherAPI = PublisherAPI.getInstance();
     private final EnvironmentAPI environmentAPI = APILocator.getEnvironmentAPI();
@@ -63,6 +64,7 @@ public class PushNowActionlet extends WorkFlowActionlet {
         final List<WorkflowActionletParameter> params = new ArrayList<>();
         params.add(new WorkflowActionletParameter(PARAM_ENVIRONMENT, "Name of the Environment", "", true));
         params.add(new WorkflowActionletParameter(PARAM_FORCE_PUSH, "Force the Push? true or false", "false", true));
+        params.add(new WorkflowActionletParameter(PARAM_FILTER_KEY, "Filter", "", true));
         return params;
     }
 
@@ -133,7 +135,8 @@ public class PushNowActionlet extends WorkFlowActionlet {
             final Date publishDate = new Date();
             identifiers.add(contentlet.getIdentifier());
             final boolean forcePush = "true".equals(params.get(PARAM_FORCE_PUSH).getValue()) ? Boolean.TRUE : Boolean.FALSE;
-            final Bundle bundle = new Bundle(null, publishDate, null, user.getUserId(), forcePush);
+            final String filterKey = params.get(PARAM_FILTER_KEY).getValue();//TODO: We need to implement the select to the push now dialog
+            final Bundle bundle = new Bundle(null, publishDate, null, user.getUserId(), forcePush,filterKey);
             this.bundleAPI.saveBundle(bundle, finalEnvs);
             this.publisherAPI.addContentsToPublish(identifiers, bundle.getId(), publishDate, user);
         } catch (final DotPublisherException e) {

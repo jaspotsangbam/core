@@ -1,5 +1,11 @@
 package com.dotcms.publishing;
 
+import com.dotmarketing.exception.DotDataException;
+import com.dotmarketing.exception.DotSecurityException;
+import com.liferay.portal.model.User;
+import java.util.List;
+import java.util.Map;
+
 public interface PublisherAPI {
 
     /**
@@ -39,4 +45,17 @@ public interface PublisherAPI {
      */
     public PublishStatus publish ( PublisherConfig config, PublishStatus status ) throws DotPublishingException;
 
+    /**
+     * Adds a filter to the map of filters, using the filterDescriptor.Key as the key
+     * @param filterDescriptor
+     */
+    void addFilter(final FilterDescriptor filterDescriptor);
+
+    List<FilterDescriptor> getFiltersByRole(final User user) throws DotDataException;
+
+    Map<String, FilterDescriptor> getFilterMap();
+
+    FilterDescriptor getFilterDescriptorByKey(final String filterKey);
+
+    PublisherFilter createPublisherFilter(final String bundleId) throws DotDataException, DotSecurityException;
 }

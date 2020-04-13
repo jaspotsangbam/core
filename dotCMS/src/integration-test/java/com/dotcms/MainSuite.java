@@ -7,9 +7,11 @@ import com.dotcms.junit.MainBaseSuite;
 import com.dotcms.mock.request.CachedParameterDecoratorTest;
 import com.dotcms.publisher.bundle.business.BundleFactoryTest;
 import com.dotcms.publisher.business.PublishAuditAPITest;
+import com.dotcms.publishing.PushPublishFiltersInitializerTest;
 import com.dotcms.publishing.job.SiteSearchJobImplTest;
 import com.dotcms.rendering.velocity.servlet.VelocityServletIntegrationTest;
 import com.dotcms.rest.api.v1.apps.AppsResourceTest;
+import com.dotcms.rest.api.v1.pushpublish.PushPublishFilterResourceTest;
 import com.dotcms.rest.api.v1.user.UserResourceIntegrationTest;
 import com.dotcms.security.apps.AppsAPIImplTest;
 import com.dotmarketing.image.focalpoint.FocalPointAPITest;
@@ -250,7 +252,9 @@ import org.junit.runners.Suite.SuiteClasses;
         FileAssetFactoryIntegrationTest.class,
         FileAssetAPIImplTest.class,
         UserResourceIntegrationTest.class,
-        SiteSearchJobImplTest.class
+        SiteSearchJobImplTest.class,
+        PushPublishFiltersInitializerTest.class,
+        PushPublishFilterResourceTest.class
 })
 public class MainSuite {
 

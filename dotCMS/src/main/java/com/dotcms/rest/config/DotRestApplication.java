@@ -28,6 +28,7 @@ import com.dotcms.rest.api.v1.page.PageResource;
 import com.dotcms.rest.api.v1.personalization.PersonalizationResource;
 import com.dotcms.rest.api.v1.personas.PersonaResource;
 import com.dotcms.rest.api.v1.portlet.PortletResource;
+import com.dotcms.rest.api.v1.pushpublish.PushPublishFilterResource;
 import com.dotcms.rest.api.v1.relationships.RelationshipsResource;
 import com.dotcms.rest.api.v1.apps.AppsResource;
 import com.dotcms.rest.api.v1.site.SiteResource;
@@ -56,7 +57,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 /**
  * This class provides the list of all the REST end-points in dotCMS. Every new
  * service needs to be added to this list in order to be available for use.
- * 
+ *
  * @author Will Ezell
  * @version 2.5.3
  * @since Dec 5, 2013
@@ -72,7 +73,7 @@ public class DotRestApplication extends javax.ws.rs.core.Application {
 			synchronized (this.getClass().getName().intern()) {
 				if(REST_CLASSES == null){
 					REST_CLASSES = new HashSet<>();
-                    REST_CLASSES.add(MultiPartFeature.class);
+					REST_CLASSES.add(MultiPartFeature.class);
 					REST_CLASSES.add(com.dotcms.rest.api.v1.index.ESIndexResource.class);
 					REST_CLASSES.add(com.dotcms.rest.RoleResource.class);
 					REST_CLASSES.add(com.dotcms.rest.BundleResource.class);
@@ -92,7 +93,7 @@ public class DotRestApplication extends javax.ws.rs.core.Application {
 					REST_CLASSES.add(com.dotcms.rest.LicenseResource.class);
 					REST_CLASSES.add(com.dotcms.rest.WorkflowResource.class);
 
-                    REST_CLASSES.add(com.dotcms.rest.RestExamplePortlet.class);
+					REST_CLASSES.add(com.dotcms.rest.RestExamplePortlet.class);
 					REST_CLASSES.add(com.dotcms.rest.elasticsearch.ESContentResourcePortlet.class);
 
 					REST_CLASSES.add(PersonaResource.class);
@@ -161,6 +162,8 @@ public class DotRestApplication extends javax.ws.rs.core.Application {
 					REST_CLASSES.add(UpgradeTaskResource.class);
 
 					REST_CLASSES.add(AppsResource.class);
+
+					REST_CLASSES.add(PushPublishFilterResource.class);
 				}
 			}
 		}

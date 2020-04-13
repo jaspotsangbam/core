@@ -203,10 +203,12 @@ public class RemotePublishAjaxAction extends AjaxAction {
             String _contentFilterDate = request.getParameter( "remoteFilterDate" );
             String _iWantTo = request.getParameter( "iWantTo" );
             String whoToSendTmp = request.getParameter( "whoToSend" );
-            String forcePushStr = request.getParameter( "forcePush" );
-            boolean forcePush = (forcePushStr!=null && forcePushStr.equals("true"));
             List<String> whereToSend = Arrays.asList(whoToSendTmp.split(","));
             List<Environment> envsToSendTo = new ArrayList<Environment>();
+            final String filterKey = request.getParameter("filterKey");
+            final boolean forcePush = (boolean) APILocator.getPublisherAPI().getFilterDescriptorByKey(filterKey).getFilters().getOrDefault("forcePush",false);
+
+
 
             // Lists of Environments to push to
             for (String envId : whereToSend) {
@@ -243,7 +245,7 @@ public class RemotePublishAjaxAction extends AjaxAction {
             Map<String, Object> responseMap = null;
 
             if ( _iWantTo.equals( RemotePublishAjaxAction.DIALOG_ACTION_PUBLISH ) || _iWantTo.equals( RemotePublishAjaxAction.DIALOG_ACTION_PUBLISH_AND_EXPIRE ) ) {
-            	Bundle bundle = new Bundle(null, publishDate, null, getUser().getUserId(), forcePush);
+            	Bundle bundle = new Bundle(null, publishDate, null, getUser().getUserId(), forcePush,filterKey);
             	APILocator.getBundleAPI().saveBundle(bundle, envsToSendTo);
 
                 responseMap = publisherAPI.addContentsToPublish( ids, bundle.getId(), publishDate, getUser() );
@@ -252,7 +254,7 @@ public class RemotePublishAjaxAction extends AjaxAction {
                 if ( (!"".equals( _contentPushExpireDate.trim() ) && !"".equals( _contentPushExpireTime.trim() )) ) {
                     Date expireDate = dateFormat.parse( _contentPushExpireDate + "-" + _contentPushExpireTime );
 
-                    Bundle bundle = new Bundle(null, publishDate, expireDate, getUser().getUserId(), forcePush);
+                    Bundle bundle = new Bundle(null, publishDate, expireDate, getUser().getUserId(), forcePush,filterKey);
                 	APILocator.getBundleAPI().saveBundle(bundle, envsToSendTo);
 
                     responseMap = publisherAPI.addContentsToUnpublish( ids, bundle.getId(), expireDate, getUser() );
@@ -305,7 +307,7 @@ public class RemotePublishAjaxAction extends AjaxAction {
 
         // Read the parameters
         String bundlesIds = request.getParameter( "bundlesIds" );
-		final String forcePush = request.getParameter("forcePush");
+		final String forcePush = request.getParameter("forcePush");//TODO: this option still lives in the retry dialog, need to remove??
 		final boolean isForcePush = UtilMethods.isSet(forcePush) ? Boolean.valueOf(forcePush) : Boolean.FALSE;
 		final String strategy = request.getParameter("deliveryStrategy");
 		final DeliveryStrategy deliveryStrategy = "1".equals(strategy) ? DeliveryStrategy.ALL_ENDPOINTS
@@ -551,9 +553,9 @@ public class RemotePublishAjaxAction extends AjaxAction {
 			return;
 		}
         //Read the parameters
-        Map<String, String> map = getURIParams();
+        final Map<String, String> map = getURIParams();
         final String bundleId = map.get( "bundleId" );
-        String paramOperation = map.get( "operation" );
+        final String paramOperation = map.get( "operation" );
         if ( bundleId == null || bundleId.isEmpty() ) {
             Logger.error( this.getClass(), "No Bundle Found with id: " + bundleId );
             response.sendError( 500, "No Bundle Found with id: " + bundleId );
@@ -571,12 +573,10 @@ public class RemotePublishAjaxAction extends AjaxAction {
         
         
         File bundle;
-        String generatedBundleId;
         try {
             //Generate the bundle file for this given operation
             Map<String, Object> bundleData = generateBundle( bundleId, operation );
             bundle = (File) bundleData.get( "file" );
-            generatedBundleId = (String) bundleData.get( "id" );
         } catch ( Exception e ) {
             Logger.error( this.getClass(), "Error trying to generate bundle with id: " + bundleId, e );
             response.sendError( 500, "Error trying to generate bundle with id: " + bundleId );
@@ -605,8 +605,8 @@ public class RemotePublishAjaxAction extends AjaxAction {
             }
 
             //Clean the just created bundle because on each download we will generate a new bundle file with a new id in order to avoid conflicts with ids
-            File bundleRoot = BundlerUtil.getBundleRoot( generatedBundleId );
-            File compressedBundle = new File( ConfigUtils.getBundlePath() + File.separator + generatedBundleId + ".tar.gz" );
+            File bundleRoot = BundlerUtil.getBundleRoot( bundleId );
+            File compressedBundle = new File( ConfigUtils.getBundlePath() + File.separator + bundleId + ".tar.gz" );
             if ( compressedBundle.exists() ) {
                 compressedBundle.delete();
                 if ( bundleRoot.exists() ) {
@@ -633,13 +633,13 @@ public class RemotePublishAjaxAction extends AjaxAction {
     @SuppressWarnings ("unchecked")
     private Map<String, Object> generateBundle ( String bundleId, PushPublisherConfig.Operation operation ) throws DotPublisherException, DotDataException, DotPublishingException, IllegalAccessException, InstantiationException, DotBundleException, IOException {
 
-        PushPublisherConfig pconf = new PushPublisherConfig();
-        PublisherAPI pubAPI = PublisherAPI.getInstance();
+        final PushPublisherConfig pconf = new PushPublisherConfig();
+        final PublisherAPI pubAPI = PublisherAPI.getInstance();
 
-        List<PublishQueueElement> tempBundleContents = pubAPI.getQueueElementsByBundleId( bundleId );
-        List<PublishQueueElement> assetsToPublish = new ArrayList<PublishQueueElement>(); 
+        final List<PublishQueueElement> tempBundleContents = pubAPI.getQueueElementsByBundleId( bundleId );
+        final List<PublishQueueElement> assetsToPublish = new ArrayList<PublishQueueElement>();
 
-        for ( PublishQueueElement c : tempBundleContents ) {
+        for ( final PublishQueueElement c : tempBundleContents ) {
                 assetsToPublish.add( c );
         }
 
@@ -654,32 +654,28 @@ public class RemotePublishAjaxAction extends AjaxAction {
 
         //BUNDLERS
 
-        List<Class<IBundler>> bundlers = new ArrayList<Class<IBundler>>();
-        List<IBundler> confBundlers = new ArrayList<IBundler>();
+        final List<Class<IBundler>> bundlers = new ArrayList<Class<IBundler>>();
+        final List<IBundler> confBundlers = new ArrayList<IBundler>();
 
-        Publisher publisher = new PushPublisher();
+        final Publisher publisher = new PushPublisher();
         publisher.init( pconf );
         //Add the bundles for this publisher
-        for ( Class clazz : publisher.getBundlers() ) {
+        for ( final Class clazz : publisher.getBundlers() ) {
             if ( !bundlers.contains( clazz ) ) {
                 bundlers.add( clazz );
             }
         }
-
-        //Create a new bundle id for this generated bundle
-        String newBundleId = UUID.randomUUID().toString();
-        pconf.setId( newBundleId );
-        File bundleRoot = BundlerUtil.getBundleRoot( pconf );
+        final File bundleRoot = BundlerUtil.getBundleRoot( pconf );
 
         // Run bundlers
         BundlerUtil.writeBundleXML( pconf );
-        for ( Class<IBundler> c : bundlers ) {
+        for ( final Class<IBundler> c : bundlers ) {
 
-            IBundler bundler = c.newInstance();
+            final IBundler bundler = c.newInstance();
             confBundlers.add( bundler );
             bundler.setConfig( pconf );
             bundler.setPublisher(publisher);
-            BundlerStatus bundlerStatus = new BundlerStatus( bundler.getClass().getName() );
+            final BundlerStatus bundlerStatus = new BundlerStatus( bundler.getClass().getName() );
             //Generate the bundler
             Logger.info(this, "Start of Bundler: " + c.getSimpleName());
             bundler.generate( bundleRoot, bundlerStatus );
@@ -689,12 +685,11 @@ public class RemotePublishAjaxAction extends AjaxAction {
         pconf.setBundlers( confBundlers );
 
         //Compressing bundle
-        ArrayList<File> list = new ArrayList<File>();
+        final ArrayList<File> list = new ArrayList<File>();
         list.add( bundleRoot );
-        File bundle = new File( bundleRoot + File.separator + ".." + File.separator + pconf.getId() + ".tar.gz" );
+        final File bundle = new File( bundleRoot + File.separator + ".." + File.separator + pconf.getId() + ".tar.gz" );
 
-        Map<String, Object> bundleData = new HashMap<String, Object>();
-        bundleData.put( "id", newBundleId );
+        final Map<String, Object> bundleData = new HashMap<String, Object>();
         bundleData.put( "file", PushUtils.compressFiles( list, bundle, bundleRoot.getAbsolutePath() ) );
         return bundleData;
     }
@@ -937,19 +932,15 @@ public class RemotePublishAjaxAction extends AjaxAction {
             PublisherAPI publisherAPI = PublisherAPI.getInstance();
 
             //Read the form values
-            String bundleId = request.getParameter( "assetIdentifier" );
-            String _contentPushPublishDate = request.getParameter( "remotePublishDate" );
-            String _contentPushPublishTime = request.getParameter( "remotePublishTime" );
-            String _contentPushExpireDate = request.getParameter( "remotePublishExpireDate" );
-            String _contentPushExpireTime = request.getParameter( "remotePublishExpireTime" );
-            String _iWantTo = request.getParameter( "iWantTo" );
-            String whoToSendTmp = request.getParameter( "whoToSend" );
-            String forcePushTmp = request.getParameter( "forcePush" );
-            
-            Boolean forcePush = false;
-            if(UtilMethods.isSet(forcePushTmp)){
-                forcePush = Boolean.valueOf(forcePushTmp);
-            }
+            final String bundleId = request.getParameter( "assetIdentifier" );
+            final String _contentPushPublishDate = request.getParameter( "remotePublishDate" );
+            final String _contentPushPublishTime = request.getParameter( "remotePublishTime" );
+            final String _contentPushExpireDate = request.getParameter( "remotePublishExpireDate" );
+            final String _contentPushExpireTime = request.getParameter( "remotePublishExpireTime" );
+            final String _iWantTo = request.getParameter( "iWantTo" );
+            final String whoToSendTmp = request.getParameter( "whoToSend" );
+            final String filterKey = request.getParameter("filterKey");
+            final boolean forcePush = (boolean) APILocator.getPublisherAPI().getFilterDescriptorByKey(filterKey).getFilters().getOrDefault("forcePush",false);
             
             List<String> whereToSend = Arrays.asList(whoToSendTmp.split(","));
             List<Environment> envsToSendTo = new ArrayList<Environment>();
@@ -976,8 +967,9 @@ public class RemotePublishAjaxAction extends AjaxAction {
 
             SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd-H-m" );
             Date publishDate = dateFormat.parse( _contentPushPublishDate + "-" + _contentPushPublishTime );
-            Bundle bundle = APILocator.getBundleAPI().getBundleById(bundleId);
+            final Bundle bundle = APILocator.getBundleAPI().getBundleById(bundleId);
             bundle.setForcePush(forcePush);
+            bundle.setFilterKey(filterKey);
             APILocator.getBundleAPI().saveBundleEnvironments(bundle, envsToSendTo);
 
             if ( _iWantTo.equals( RemotePublishAjaxAction.DIALOG_ACTION_PUBLISH )) {
