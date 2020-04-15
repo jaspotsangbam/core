@@ -72,13 +72,6 @@ public class ResourceLinkTest {
                 return identifier;
             }
 
-            @Override
-            FileAsset getFileAsset(final Contentlet contentlet){
-                final FileAsset fileAsset = mock(FileAsset.class);
-                when(fileAsset.getMimeType()).thenReturn(mimeType);
-                when(fileAsset.getFileName()).thenReturn(htmlFileName);
-                return fileAsset;
-            }
 
             @Override
             boolean isDownloadPermissionBasedRestricted(final Contentlet contentlet,

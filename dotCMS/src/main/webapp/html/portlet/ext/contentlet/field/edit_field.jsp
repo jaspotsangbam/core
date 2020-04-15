@@ -428,11 +428,8 @@
                 binInode=sib;
             }
 
-            ResourceLink resourceLink = null;
-
-            if(structure.getStructureType() == Structure.STRUCTURE_TYPE_FILEASSET){
-                resourceLink = new ResourceLinkBuilder().build(request, user, contentlet);
-            }
+            ResourceLink resourceLink = new ResourceLinkBuilder().build(request, user, contentlet, field.getVelocityVarName());
+    
 
         %>
 
@@ -600,7 +597,7 @@
             <% if (resourceLink.isEditableAsText()) { %>
                 <%
                     if (InodeUtils.isSet(binInode) && canUserWriteToContentlet) {
-                        final FileAsset fa = resourceLink.getFileAsset();
+
                 %>
                     <%@ include file="/html/portlet/ext/contentlet/field/edit_file_asset_text_inc.jsp"%>
                 <%  } %>
